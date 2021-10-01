@@ -53,28 +53,28 @@ defmodule CoinWallet.Exchanges.BitstampClient do
     handle_ws_message(Jason.decode!(msg), state)
   end
 
-  # def handle_ws_message(%{"type" => "ticker"} = msg, state) do
-  #   msg
-  #   |> message_to_trade()
-  #   |> IO.inspect(label: "trade")
+  def handle_ws_message(%{"event" => "trade"} = msg, state) do
+    msg
+    |> message_to_trade()
+    |> IO.inspect(label: "trade")
 
-  #   {:noreply, state}
-  # end
+    {:noreply, state}
+  end
 
   def handle_ws_message(msg, state) do
     IO.inspect(msg, label: "unhandled message")
     {:noreply, state}
   end
 
-  def message_to_trade(msg) do
-    with :ok <- validate_required(msg, ["product_id", "time", "price", "last_size"]),
-         {:ok, traded_at, _} <- DateTime.from_iso8601(msg["time"]) do
-      currency_pair = msg["product_id"]
-
+  @spec message_to_trade(map()) :: {:ok, Trade.t()} | {:error, any()}
+  def message_to_trade(%{"data" => data, "channel" => "live_trades_" <> currency_pair})
+      when is_map(data) do
+    with :ok <- validate_required(data, ["amount_str", "price_str", "timestamp"]),
+         {:ok, traded_at} <- timestamp_to_datetime(data["timestamp"]) do
       Trade.new(
         product: Product.new(@exchange_name, currency_pair),
-        price: msg["price"],
-        volume: msg["last_size"],
+        price: data["price_str"],
+        volume: data["amount_str"],
         traded_at: traded_at
       )
     else
@@ -82,6 +82,8 @@ defmodule CoinWallet.Exchanges.BitstampClient do
         error
     end
   end
+
+  def message_to_trade(_msg), do: {:error, :invalid_trade_message}
 
   def server_host, do: 'ws.bitstamp.net'
   def server_port, do: 443
@@ -111,5 +113,16 @@ defmodule CoinWallet.Exchanges.BitstampClient do
   defp subscribe(state) do
     subscription_frames(state.currency_pairs)
     |> Enum.each(&:gun.ws_send(state.conn, &1))
+  end
+
+  @spec timestamp_to_datetime(String.t()) :: {:ok, DateTime.t()} | {:error, atom()}
+  def timestamp_to_datetime(ts) do
+    case Integer.parse(ts) do
+      {timestamp, _} ->
+        DateTime.from_unix(timestamp)
+
+      :error ->
+        {:error, :invalid_timestamp_string}
+    end
   end
 end
