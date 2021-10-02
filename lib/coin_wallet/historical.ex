@@ -15,12 +15,12 @@ defmodule CoinWallet.Historical do
   end
 
   @spec get_last_trades(pid() | atom(), [Product.t()]) :: [Trade.t() | nil]
-  def get_last_trades(pid, products) do
+  def get_last_trades(pid \\ __MODULE__, products) do
     GenServer.call(pid, {:get_last_trades, products})
   end
 
   def start_link(opts) do
-    {products, opts} = Keyword.pop(opts, :products, [])
+    {products, opts} = Keyword.pop(opts, :products, Exchanges.available_products())
     GenServer.start_link(__MODULE__, products, opts)
   end
 
