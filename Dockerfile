@@ -33,12 +33,6 @@ COPY priv priv
 COPY assets assets
 RUN mix assets.deploy
 
-# NOTE: If using TailwindCSS, it uses a special "purge" step and that requires
-# the code in `lib` to see what is being used. Uncomment that here before
-# running the npm deploy script if that's the case.
-COPY lib lib
-
-# copy source here if not using TailwindCSS
 COPY lib lib
 
 # compile and build release
