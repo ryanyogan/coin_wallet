@@ -11,4 +11,5 @@ defmodule CoinWallet do
   defdelegate unsubscribe_from_trades(product), to: CoinWallet.Exchanges, as: :unsubscribe
   defdelegate get_last_trade(product), to: CoinWallet.Historical
   defdelegate get_last_trades(products), to: CoinWallet.Historical
+  defdelegate available_products(), to: CoinWallet.Exchanges
 end

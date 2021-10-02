@@ -1,0 +1,30 @@
+# fly.toml file generated for misty-voice-1567 on 2021-10-02T17:37:41-05:00
+
+app = "misty-voice-1567"
+
+kill_signal = "SIGTERM"
+kill_timeout = 5
+
+[env]
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 6
+    timeout = "2s"
