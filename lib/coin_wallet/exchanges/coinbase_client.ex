@@ -1,18 +1,28 @@
 defmodule CoinWallet.Exchanges.CoinbaseClient do
   alias CoinWallet.{Trade, Product}
   alias CoinWallet.Exchanges.Client
-  import Client, only: [validate_required: 2]
 
-  @behaviour Client
+  require Client
+
+  Client.defclient(
+    exchange_name: "coinbase",
+    host: 'ws-feed.pro.coinbase.com',
+    port: 443,
+    currency_pairs: ["BTC-USD", "ETH-USD", "LTC-USD", "BTC-EUR", "ETH-EUR", "LTC-EUR"]
+  )
 
   @impl true
-  def exchange_name, do: "coinbase"
+  def subscription_frames(currency_pairs) do
+    msg =
+      %{
+        "type" => "subscribe",
+        "product_ids" => currency_pairs,
+        "channels" => ["ticker"]
+      }
+      |> Jason.encode!()
 
-  @impl true
-  def server_host, do: 'ws-feed.pro.coinbase.com'
-
-  @impl true
-  def server_port, do: 443
+    [{:text, msg}]
+  end
 
   @impl true
   def handle_ws_message(%{"type" => "ticker"} = msg, state) do
@@ -44,18 +54,5 @@ defmodule CoinWallet.Exchanges.CoinbaseClient do
       {:error, _reasons} = error ->
         error
     end
-  end
-
-  @impl true
-  def subscription_frames(currency_pairs) do
-    msg =
-      %{
-        "type" => "subscribe",
-        "product_ids" => currency_pairs,
-        "channels" => ["ticker"]
-      }
-      |> Jason.encode!()
-
-    [{:text, msg}]
   end
 end
