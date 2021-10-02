@@ -8,6 +8,7 @@ defmodule CoinWallet do
   """
 
   defdelegate subscribe_to_trades(product), to: CoinWallet.Exchanges, as: :subscribe
-
   defdelegate unsubscribe_from_trades(product), to: CoinWallet.Exchanges, as: :unsubscribe
+  defdelegate get_last_trade(pid, product), to: CoinWallet.Historical
+  defdelegate get_last_trades(pid, products), to: CoinWallet.Historical
 end
