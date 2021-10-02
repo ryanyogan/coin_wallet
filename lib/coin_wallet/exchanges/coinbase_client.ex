@@ -26,10 +26,8 @@ defmodule CoinWallet.Exchanges.CoinbaseClient do
 
   @impl true
   def handle_ws_message(%{"type" => "ticker"} = msg, state) do
-    msg
-    |> message_to_trade()
-    |> IO.inspect(label: "trade")
-
+    {:ok, trade} = message_to_trade(msg)
+    CoinWallet.Exchanges.broadcast(trade)
     {:noreply, state}
   end
 
@@ -44,12 +42,13 @@ defmodule CoinWallet.Exchanges.CoinbaseClient do
          {:ok, traded_at, _} <- DateTime.from_iso8601(msg["time"]) do
       currency_pair = msg["product_id"]
 
-      Trade.new(
-        product: Product.new(exchange_name(), currency_pair),
-        price: msg["price"],
-        volume: msg["last_size"],
-        traded_at: traded_at
-      )
+      {:ok,
+       Trade.new(
+         product: Product.new(exchange_name(), currency_pair),
+         price: msg["price"],
+         volume: msg["last_size"],
+         traded_at: traded_at
+       )}
     else
       {:error, _reasons} = error ->
         error

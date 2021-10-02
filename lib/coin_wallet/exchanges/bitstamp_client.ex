@@ -30,10 +30,8 @@ defmodule CoinWallet.Exchanges.BitstampClient do
 
   @impl true
   def handle_ws_message(%{"event" => "trade"} = msg, state) do
-    msg
-    |> message_to_trade()
-    |> IO.inspect(label: "trade")
-
+    {:ok, trade} = message_to_trade(msg)
+    CoinWallet.Exchanges.broadcast(trade)
     {:noreply, state}
   end
 
@@ -47,12 +45,13 @@ defmodule CoinWallet.Exchanges.BitstampClient do
       when is_map(data) do
     with :ok <- validate_required(data, ["amount_str", "price_str", "timestamp"]),
          {:ok, traded_at} <- timestamp_to_datetime(data["timestamp"]) do
-      Trade.new(
-        product: Product.new(exchange_name(), currency_pair),
-        price: data["price_str"],
-        volume: data["amount_str"],
-        traded_at: traded_at
-      )
+      {:ok,
+       Trade.new(
+         product: Product.new(exchange_name(), currency_pair),
+         price: data["price_str"],
+         volume: data["amount_str"],
+         traded_at: traded_at
+       )}
     else
       {:error, _reasons} = error ->
         error
