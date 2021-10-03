@@ -17,7 +17,7 @@ defmodule CoinWalletWeb.Router do
   scope "/", CoinWalletWeb do
     pipe_through :browser
 
-    get "/", ProductController, :index
+    live "/", CryptoDashboardLive
   end
 
   if Mix.env() in [:dev, :test] do
